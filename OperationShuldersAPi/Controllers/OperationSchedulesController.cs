@@ -24,22 +24,34 @@ namespace OperationShuldersAPi.Controllers
             return Ok(schedules);
         }
 
-        // Создать запись
         [HttpPost]
-        public async Task<IActionResult> CreateSchedule([FromBody] OperationSchedule schedule)
+        public async Task<IActionResult> CreateSchedule([Bind("SurgeonId,OperationDate,StartTime,EndTime,OperatingRoomId,Status,CreatedAt")] OperationSchedule schedule)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Возвращает ошибки валидации
+            }
+
             _context.OperationSchedules.Add(schedule);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetAllSchedules), new { id = schedule.Operation_Id }, schedule);
         }
 
+
+
         // Обновить запись
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSchedule(int id, [FromBody] OperationSchedule updatedSchedule)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // Ошибки валидации
+            }
+
             var schedule = await _context.OperationSchedules.FindAsync(id);
             if (schedule == null) return NotFound("Расписание не найдено.");
 
+            // Обновляем данные
             schedule.OperationDate = updatedSchedule.OperationDate;
             schedule.StartTime = updatedSchedule.StartTime;
             schedule.EndTime = updatedSchedule.EndTime;
@@ -51,6 +63,7 @@ namespace OperationShuldersAPi.Controllers
             return Ok(schedule);
         }
 
+
         // Удалить запись
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSchedule(int id)
@@ -58,10 +71,19 @@ namespace OperationShuldersAPi.Controllers
             var schedule = await _context.OperationSchedules.FindAsync(id);
             if (schedule == null) return NotFound("Расписание не найдено.");
 
-            _context.OperationSchedules.Remove(schedule);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.OperationSchedules.Remove(schedule);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return Conflict("Не удалось удалить расписание. Убедитесь, что у него нет зависимостей.");
+            }
+
             return Ok(new { message = "Запись удалена." });
         }
+
     }
 
 }
