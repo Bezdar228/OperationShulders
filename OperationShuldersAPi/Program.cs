@@ -5,6 +5,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddMemoryCache();
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug() 
