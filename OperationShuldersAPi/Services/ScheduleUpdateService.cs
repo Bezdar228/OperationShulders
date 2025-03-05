@@ -1,13 +1,13 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using OperationShuldersAPi.Models;
+using OperationShuldersAPi.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using OperationShuldersAPi.Models;
-using OperationShuldersAPi.Services;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OperationShuldersAPi.Services
 {
@@ -34,6 +34,7 @@ namespace OperationShuldersAPi.Services
                     {
                         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+                        // Пример: проверяем, были ли обновления расписания за последние 5 минут
                         var recentUpdates = await dbContext.OperationSchedules
                             .Where(os => EF.Functions.DateDiffMinute(os.CreatedAt, DateTime.UtcNow) <= 5)
                             .ToListAsync(stoppingToken);
@@ -41,13 +42,11 @@ namespace OperationShuldersAPi.Services
                         if (recentUpdates.Any())
                         {
                             _logger.LogInformation("Обнаружено {Count} обновлений расписания.", recentUpdates.Count);
-
-                            // Получаем сервис отправки email
                             var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
 
-                            // Отправляем уведомление на указанную почту
+                            // Отправка уведомления на Gmail
                             await emailSender.SendEmailAsync(
-                                "e.ovsanik@mail.ru",
+                                "pfxaiznikc@rambler.ru",  // Замените на нужный Gmail адрес
                                 "Обновление расписания",
                                 $"Обнаружено {recentUpdates.Count} обновлений расписания."
                             );
